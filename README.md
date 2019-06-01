@@ -9,6 +9,8 @@ Extensions Readme is a Visual Studio Code extension that lists all extensions in
 How to use:
 ----------
 
-F1 then type `extension-readme` it will list all non builtin extensions, choose one and it will open its readme markdown file.
+F1 then type `extensions list` it will show command `Extensions: List them...` hit Enter and that will list all non builtin extensions, choose one and it will open its readme markdown file.
+
+You can always assing a hotkey with Visual Studio Code's builtin hotkeys manager.
 
 ![preview](https://github.com/vhanla/vscode-extensions-readme/blob/master/images/preview.jpg?raw=true)
