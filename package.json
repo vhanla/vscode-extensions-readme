@@ -7,20 +7,20 @@
     "publisher": "vhanla",
     "author": {
         "name": "Victor Alberto Gil",
-        "url": "https://github.com/vhanla/extensionsreadme",
+        "url": "https://github.com/vhanla/vscode-extensions-readme",
         "email": "vhanla@gmail.com"
     },
-    "homepage": "https://github.com/vhanla/extensionsreadme",
+    "homepage": "https://github.com/vhanla/vscode-extensions-readme",
     "galleryBanner": {
         "color": "#3B4859",
         "theme": "dark"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/vhanla/extensionsreadme.git"
+        "url": "https://github.com/vhanla/vscode-extensions-readme.git"
     },
     "bugs": {
-        "url": "https://github.com/vhanla/extensionsreadme/issues",
+        "url": "https://github.com/vhanla/vscode-extensions-readme/issues",
         "email": "vhanla@gmail.com"
     },
     "engines": {

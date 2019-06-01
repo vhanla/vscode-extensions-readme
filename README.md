@@ -8,3 +8,4 @@ How to use:
 
 F1 then type `extension-readme` it will list all non builtin extensions, choose one and it will open its readme markdown file.
 
+![preview](https://github.com/vhanla/vscode-extensions-readme/blob/master/images/preview.jpg?raw=true)
