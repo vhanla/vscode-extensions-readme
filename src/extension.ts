@@ -110,9 +110,15 @@ export async function activate(context: vscode.ExtensionContext) {
                 message => {
                   switch (message.command) {
                     case "openRepository":
-                      vscode.env.openExternal(
-                        vscode.Uri.parse(message.repo.url)
-                      );
+                      if (message.repo !== undefined) {
+                        vscode.env.openExternal(
+                          vscode.Uri.parse(message.repo.url)
+                        );
+                      } else {
+                        vscode.window.showErrorMessage(
+                          "It doesn't have a remote repository!"
+                        );
+                      }
                       return;
                     case "openChangelog":
                       const changelogPath = path.join(
