@@ -41,9 +41,12 @@ export async function activate(context: vscode.ExtensionContext) {
         return {
           label: ext.displayName !== undefined ? ext.displayName : ext.name,
           extPath: ext.path,
-          description: `${ext.name} v${ext.version} by ${
-            ext.metadata.publisherDisplayName
-          }`,
+          description:
+            ext.name +
+            " v" +
+            ext.version +
+            " by " +
+            ext.metadata.publisherDisplayName,
           repository: ext.metadata.repository,
           marketPlace: ext.publisher + "." + ext.name
         };
