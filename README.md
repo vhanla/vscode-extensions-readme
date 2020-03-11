@@ -13,4 +13,6 @@ F1 then type `extensions list` it will show command `Extensions: List them...` h
 
 You can always assing a hotkey with Visual Studio Code's builtin hotkeys manager.
 
-![preview](https://github.com/vhanla/vscode-extensions-readme/blob/master/images/preview.jpg?raw=true)
+![preview](https://github.com/vhanla/vscode-extensions-readme/blob/master/images/preview.gif?raw=true)
+
+You can also click the menu in the top bar (icons) to open its remote repository, marketplace, local changelog file and local source file.
