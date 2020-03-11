@@ -1,5 +1,4 @@
 "use strict";
-import * as path from "path";
 import * as vscode from "vscode";
 
 export class ExtensionInformation {
@@ -17,6 +16,7 @@ export class ExtensionInformation {
     const item = new ExtensionInformation();
     item.metadata = meta;
     item.name = obj.name;
+    item.displayName = obj.displayName;
     item.publisher = obj.publisher;
     item.version = obj.version;
     return item;
@@ -53,6 +53,7 @@ export class ExtensionInformation {
 
   public metadata: ExtensionMetadata;
   public name: string;
+  public displayName: string;
   public path: string;
   public version: string;
   public publisher: string;
@@ -97,7 +98,8 @@ export class ExtInfo {
       const info = new ExtensionInformation();
       info.metadata = data;
       info.name = ext.packageJSON.name;
-      info.path = path.join(ext.extensionPath, "readme.md");
+      info.displayName = ext.packageJSON.displayName;
+      info.path = ext.extensionPath;
       info.publisher = ext.packageJSON.publisher;
       info.version = ext.packageJSON.version;
       list.push(info);

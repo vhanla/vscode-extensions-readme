@@ -1,33 +1,275 @@
 "use strict";
 
 import * as fs from "fs";
+import * as path from "path";
 import * as vscode from "vscode";
 import { ExtensionInformation, ExtInfo } from "./extinfo";
+let currentExtension = null;
+
+async function render(markdownFile: string) {
+  const document = await
+  vscode.workspace.openTextDocument(markdownFile);
+  return await vscode.commands.executeCommand('markdown.api.render', document) as string;
+}
+
+function isOldVsCode(){
+  let major, minor, rev;
+  let arr = vscode.version.split('.');
+  major = arr[0];
+  minor = arr[1];
+  rev = arr[2].split('-')[0].trim();
+  if (major < 2 && minor < 39 && rev < 1)
+  {
+    return true;
+  }
+  return false;
+}
 
 export async function activate(context: vscode.ExtensionContext) {
+  let panels: vscode.WebviewPanel[] = [];
+  let currentPanel = '';
+  //let panel: vscode.WebviewPanel | undefined = undefined;
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.listReadmes", () => {
       let extList: ExtensionInformation[] = [];
       extList = ExtInfo.CreateExtensionList();
       const readmes = extList.map(ext => {
-        return { label: ext.name, filePath: ext.path };
+        return { label: ext.displayName, 
+                 extPath: ext.path, 
+                 description: ext.name + ' v' + ext.version + ' by ' + ext.metadata.publisherDisplayName,
+                 repository: ext.metadata.repository,
+                 marketPlace: ext.publisher + '.' + ext.name
+               };
       });
       vscode.window.showQuickPick(readmes).then(val => {
-        if (fs.existsSync(val.filePath)) {
-          vscode.workspace.openTextDocument(val.filePath).then(d => {
-            vscode.commands.executeCommand(
-              "workbench.action.closeEditorsInOtherGroups"
-            );
-            vscode.window
-              .showTextDocument(d, 0, false)
-              .then(() =>
-                vscode.commands.executeCommand("markdown.showPreview")
+        currentExtension = val;
+        let readmePath = path.join(val.extPath, 'readme.md');
+        if (fs.existsSync(readmePath)) {
+          if (isOldVsCode())
+          {
+            vscode.workspace.openTextDocument(readmePath).then(d => {
+              vscode.commands.executeCommand(
+                "workbench.action.closeEditorsInOtherGroups"
               );
-          });
+              vscode.window
+                .showTextDocument(d, 0, false)
+                .then(() =>
+                  vscode.commands.executeCommand("markdown.showPreview")
+                );
+            });
+          }
+          else{
+            let exists: boolean = false;
+            panels.forEach(p => {
+              if (p.title == readmePath && !exists) {
+                exists = true;
+                p.reveal(vscode.ViewColumn.One);
+              }
+            });
+            if(!exists){
+
+              let panel = vscode.window.createWebviewPanel(
+                'readmeMarkdown',
+                readmePath,
+                vscode.ViewColumn.One,
+                {
+                  enableFindWidget: true,
+                  retainContextWhenHidden: true,
+                  enableScripts: true
+                },
+              );
+  
+              panel.onDidChangeViewState(({webviewPanel}) => {
+                vscode.commands.executeCommand('setContext', 'readmeMarkdownFocused', webviewPanel.active);
+                currentPanel = readmePath;
+              });
+              panel.onDidDispose(({}) => {
+                vscode.commands.executeCommand('setContext', 'readmeMarkdownFocused', false);
+                let idx = panels.indexOf(panel, 0);
+                if (idx > -1){
+                  panels.splice(idx, 1);
+                }
+                panel = undefined;
+              },
+              undefined,
+              context.subscriptions);
+  
+              panel.webview.onDidReceiveMessage(
+                message => {
+                  switch (message.command) {
+                    case 'openRepository':
+                      vscode.env.openExternal(vscode.Uri.parse(message.repo.url));
+                      return;
+                    case 'openChangelog':
+                      let changelogPath = path.join(val.extPath, 'changelog.md');
+                      if (fs.existsSync(changelogPath)) {
+                        vscode.workspace.openTextDocument(changelogPath).then(d => {
+                          vscode.commands.executeCommand(
+                            "workbench.action.closeEditorsInOtherGroups"
+                          );
+                          vscode.window
+                            .showTextDocument(d, 0, false)
+                            .then(() =>
+                              vscode.commands.executeCommand("markdown.showPreview")
+                            );
+                        });
+                      } else {
+                        vscode.window.showErrorMessage("Changelog.md file not found!");
+                      }
+                      return;
+                    case 'openReadme':
+                      let readmePath = path.join(val.extPath, 'readme.md');
+                      if (fs.existsSync(readmePath)) {
+                        vscode.workspace.openTextDocument(readmePath).then(d => {
+                          vscode.commands.executeCommand(
+                            "workbench.action.closeEditorsInOtherGroups"
+                          );
+                          vscode.window
+                            .showTextDocument(d, 0, false);
+                        });
+                      } else {
+                        vscode.window.showErrorMessage("Readme.md file not found!");
+                      }
+                      return;
+                    case 'openMarket':
+                      vscode.env.openExternal(vscode.Uri.parse('https://marketplace.visualstudio.com/items?itemName='+message.market));
+                      return;
+                  }
+                },
+                undefined,
+                context.subscriptions
+              );
+  
+              render(readmePath).then(value => {
+                 panel.webview.html = `<!DOCTYPE html>
+                 <html lang="en">
+                  <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  </head> 
+                  <body>
+                  <script>
+                    let path, market, repo;
+                    const vscode = acquireVsCodeApi();
+                    window.addEventListener('message', event => {
+                      const msg = event.data;
+                      switch (msg.command){
+                        case 'saveData':
+                          path = msg.path;
+                          market = msg.market;
+                          repo = msg.repo;
+                          break;
+                        case 'openRepository':
+                          vscode.postMessage({
+                            command: 'openRepository',
+                            repo: repo
+                          })
+                          break;
+                        case 'openChangelog':
+                          vscode.postMessage({
+                            command: 'openChangelog',
+                            path: path
+                          })
+                          break;
+                        case 'openReadme':
+                          vscode.postMessage({
+                            command: 'openReadme',
+                            path: path
+                          })
+                          break;
+                        case 'openMarket':
+                          vscode.postMessage({
+                            command: 'openMarket',
+                            market: market
+                          })
+                          break;
+                      }
+                    });
+                  </script>
+                 ${value}
+                 </body>
+                 </html>`;
+                 vscode.commands.executeCommand('setContext', 'readmeMarkdownFocused', true);
+                 panel.webview.postMessage({command: 'saveData', path: val.extPath, market: val.marketPlace, repo: val.repository})
+                 currentPanel = readmePath;
+                }
+              );
+              panels.push(panel);
+            }
+          }
         } else {
           vscode.window.showErrorMessage("Readme.md file not found!");
         }
       });
+    }),
+    vscode.commands.registerCommand("extension.openRepository", () => {
+      if(isOldVsCode()){
+        vscode.env.openExternal(vscode.Uri.parse(currentExtension.repository.url))
+      }
+      else{
+        if (panels) {
+          panels.forEach(p => {
+            if(p.title == currentPanel){
+              p.webview.postMessage({command: 'openRepository'});
+            }
+          });
+        }
+      }
+    }),
+    vscode.commands.registerCommand("extension.openChangelog", () => {
+      if(isOldVsCode()){
+        if (currentExtension){
+          let changelogPath = path.join(currentExtension.extPath, 'changelog.md');
+          if (fs.existsSync(changelogPath)){
+            vscode.workspace.openTextDocument(changelogPath).then(d => {
+              vscode.commands.executeCommand(
+                "workbench.action.closeEditorsInOtherGroups"
+              );
+              vscode.window
+                .showTextDocument(d, 0, false)
+                .then(() =>
+                  vscode.commands.executeCommand("markdown.showPreview")
+                );
+            });
+          } else {
+            vscode.window.showErrorMessage("Changelog.md file not found!");
+          }
+        }
+      } else {
+        if (panels) {
+          panels.forEach(p => {
+            if(p.title == currentPanel){
+              p.webview.postMessage({command: 'openChangelog'});
+            }
+          });
+        }
+      }
+    }),
+    vscode.commands.registerCommand("extension.openReadme", () => {
+      if(!isOldVsCode()){
+        if (panels) {
+          panels.forEach(p => {
+            if(p.title == currentPanel){
+              p.webview.postMessage({command: 'openReadme'});
+            }
+          });
+        }
+      }
+    }),
+    vscode.commands.registerCommand("extension.openMarketplace", () => {
+      if(isOldVsCode()){
+        if (currentExtension){
+          vscode.env.openExternal(vscode.Uri.parse('https://marketplace.visualstudio.com/items?itemName='+currentExtension.marketPlace))
+        }
+      } else {
+        if (panels) {
+          panels.forEach(p => {
+            if(p.title == currentPanel){
+              p.webview.postMessage({command: 'openMarket'});
+            }
+          });
+        }
+      }
     })
   );
 }

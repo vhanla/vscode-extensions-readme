@@ -2,7 +2,7 @@
     "name": "extensions-readme",
     "displayName": "Extensions Readme",
     "description": "Find installed extension's readme easily",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "icon": "images/extread.png",
     "publisher": "vhanla",
     "author": {
@@ -44,8 +44,61 @@
             {
                 "command": "extension.listReadmes",
                 "title": "Extensions: Lists them to open its readme.md file."
+            },
+            {
+                "command": "extension.openRepository",
+                "title": "Open Repository",
+                "icon" : {
+                    "light": "images/repo.png",
+                    "dark": "images/repo_inverse.png"
+                }
+            },
+            {
+                "command": "extension.openChangelog",
+                "title": "Open Changelog",
+                "icon": {
+                    "light": "images/changelog.png",
+                    "dark": "images/changelog_inverse.png"
+                }
+            },
+            {
+                "command": "extension.openMarketplace",
+                "title": "Open MarketPlace",
+                "icon": {
+                    "light": "images/marketplace.png",
+                    "dark": "images/marketplace_inverse.png"
+                }
+            },
+            {
+                "command": "extension.openReadme",
+                "title": "Show Source",
+                "icon": {
+                    "light": "images/source.png",
+                    "dark": "images/source_inverse.png"
+                }
             }
-        ]
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "when": "(!readmeMarkdownFocused &&(markdownPreviewFocus || resourceLangId == markdown)) || readmeMarkdownFocused",
+                    "command": "extension.openRepository",
+                    "group": "navigation@1"
+                },{
+                    "when": "(!readmeMarkdownFocused &&(markdownPreviewFocus || resourceLangId == markdown)) || readmeMarkdownFocused",
+                    "command": "extension.openChangelog",
+                    "group": "navigation@1"
+                },{
+                    "when": "(!readmeMarkdownFocused &&(markdownPreviewFocus || resourceLangId == markdown)) || readmeMarkdownFocused",
+                    "command": "extension.openMarketplace",
+                    "group": "navigation@1"
+                },{
+                    "when": "readmeMarkdownFocused",
+                    "command": "extension.openReadme",
+                    "group": "navigation@1"
+                }
+            ]
+        }
     },
     "main": "./out/extension.js",
     "scripts": {
